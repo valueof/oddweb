@@ -11,7 +11,8 @@
   "dependencies": {
     "async":      "0.2.x",
     "handlebars": "1.0.x",
-    "jshint":     "latest"
+    "jshint":     "latest",
+    "markdown":   "0.5.x"
   },
 
   "siteStructure": {

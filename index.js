@@ -3,7 +3,9 @@
 var async = require("async");
 var fs    = require("fs");
 var path  = require("path");
-var hbrs  = require("handlebars");
+
+var handlebars = require("handlebars");
+var markdown   = require("markdown").markdown;
 
 function mkdir(dir, cb) {
   async.reduce(dir.split(path.sep), "", function (acc, curr, cb) {
@@ -36,10 +38,10 @@ function walk(dir, cb) {
 }
 
 function read(next) {
-  walk("./pages/", function (err, pages) {
+  walk(path.join(".", "pages"), function (err, pages) {
     if (err) return void next(err, {});
 
-    async.reduce(pages, [], function (acc, file, cb) {
+    async.reduce(pages, { cache: {}, pages: [] }, function (acc, file, cb) {
       fs.readFile(file, { encoding: "utf8" }, function (err, data) {
         if (err) return void cb(err, acc);
 
@@ -56,21 +58,41 @@ function read(next) {
         if (path.extname(meta.path) === "")
           meta.path = path.join(meta.path, "index.html");
 
-        acc.push({
-          meta: meta,
-          data: data
-        });
+        var tpath = path.join(".", "templates", meta.template + ".html");
+        if (meta.template && !acc.cache[meta.template]) {
+          fs.readFile(tpath, { encoding: "utf8" }, function (err, template) {
+            if (err) return cb(err, null);
 
+            acc.cache[meta.template] = template.toString();
+            acc.pages.push({ meta: meta, data: data });
+            cb(null, acc);
+          });
+
+          return;
+        }
+
+        acc.pages.push({ meta: meta, data: data });
         cb(null, acc);
       });
     }, next);
   });
 }
 
-function compile(pages, next) {
-  pages = pages.map(function (page) {
-    if (path.extname(page.meta.path) === ".html")
-      page.data = hbrs.compile(page.data)(page.meta);
+function compile(site, next) {
+  var pages = site.pages.map(function (page) {
+    switch (path.extname(page.meta.path)) {
+    case ".html":
+      page.data = handlebars.compile(page.data)(page.meta);
+      break;
+    case ".md":
+      page.data = markdown.toHTML(page.data);
+    }
+
+    if (page.meta.template) {
+      page.data = handlebars.compile(site.cache[page.meta.template])({
+        content: new handlebars.SafeString(page.data)
+      });
+    }
 
     return page;
   });
@@ -94,5 +116,5 @@ function write(pages, next) {
 }
 
 async.waterfall([ read, compile, write ], function (err) {
-  console.log("DONE");
+  console.log(err, "DONE");
 });
