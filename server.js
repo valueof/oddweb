@@ -1,0 +1,54 @@
+"use strict";
+
+var fs     = require("fs")
+var http   = require("http")
+var url    = require("url")
+var path   = require("path")
+var oddweb = require("./index.js")
+
+function server(dir, port) {
+  function rebuild() {
+    console.log("rebuilding...")
+    oddweb.write(oddweb.build(oddweb.read(dir)), dir)
+  }
+
+  rebuild()
+  fs.watch(path.join(dir, "pages"), rebuild)
+  fs.watch(path.join(dir, "res"), rebuild)
+  fs.watch(path.join(dir, "templates"), rebuild)
+
+  dir = path.join(dir, "site")
+  http.createServer(function (req, resp) {
+    var uri  = url.parse(req.url).pathname
+    var file = path.join(dir, uri)
+
+    fs.exists(file, function (exists) {
+      if (!exists) {
+        resp.writeHead(404, { "Content-Type": "text/plain" })
+        resp.write("¯\\_(ツ)_/¯")
+        resp.end()
+        return
+      }
+
+      if (fs.statSync(file).isDirectory())
+        file += "/index.html"
+
+      fs.readFile(file, "binary", function (err, f) {
+        if (err) {
+          resp.writeHead(500, { "Content-Type": "text/plain" })
+          resp.write(err + "\n")
+          resp.end()
+          return
+        }
+
+        resp.writeHead(200)
+        resp.write(f, "binary")
+        resp.end()
+      })
+    })
+  }).listen(port)
+
+  console.log("listening on localhost:" + port)
+}
+
+module.exports = server

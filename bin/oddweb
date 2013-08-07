@@ -3,6 +3,7 @@
 "use strict";
 
 var oddweb = require("../index.js")
+var server = require("../server.js")
 var args   = process.argv.slice(2)
 var cmd    = args[0] || "build"
 var dir    = args[1]
@@ -17,5 +18,7 @@ if (!dir)
 
 if (cmd === "build")
   oddweb.write(oddweb.build(oddweb.read(dir)), dir)
+else if (cmd === "dev")
+  server(dir, 4000)
 else
   error("invalid command (use 'build' or 'dev')")

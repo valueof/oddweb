@@ -5,7 +5,7 @@
   "main": "index.js",
 
   "scripts": {
-    "pretest": "jshint index.js tests.js",
+    "pretest": "jshint index.js tests.js server.js",
     "test":    "nodeunit tests.js"
   },
 
