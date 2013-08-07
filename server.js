@@ -17,10 +17,9 @@ function server(dir, port) {
   fs.watch(path.join(dir, "res"), rebuild)
   fs.watch(path.join(dir, "templates"), rebuild)
 
-  dir = path.join(dir, "site")
   http.createServer(function (req, resp) {
     var uri  = url.parse(req.url).pathname
-    var file = path.join(dir, uri)
+    var file = path.join(dir, "site", uri)
 
     fs.exists(file, function (exists) {
       if (!exists) {
