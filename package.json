@@ -28,6 +28,10 @@
     "undef":  true
   },
 
+  "bin": {
+    "oddweb": "./bin/oddweb"
+  }
+
   "repository": "https://github.com/antonkovalyov/oddweb.git",
   "author": "Anton Kovalyov <anton@kovalyov.net>",
   "license": "BSD"
