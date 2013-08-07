@@ -1,120 +1,119 @@
 "use strict";
 
-var async = require("async");
-var fs    = require("fs");
-var path  = require("path");
+var path  = require("path")
+var sh    = require("shelljs")
 
-var handlebars = require("handlebars");
-var markdown   = require("markdown").markdown;
+var handlebars = require("handlebars")
+var markdown   = require("markdown").markdown
 
-function mkdir(dir, cb) {
-  async.reduce(dir.split(path.sep), "", function (acc, curr, cb) {
-    var ap = path.join(acc, curr);
+function read(dir) {
+  var site = {}
 
-    fs.exists(ap, function (exists) {
-      if (exists)
-        cb(null, ap);
+  site.pages = sh.ls("-R", path.join(dir, "pages"))
+  site.pages = site.pages.reduce(function (acc, file) {
+    var ap = path.join(dir, "pages", file)
 
-      fs.mkdir(ap, function (err) { cb(err, ap) });
-    });
-  }, cb);
+    if (sh.test("-d", ap))
+      return acc
+
+    var data = sh.cat(ap)
+    var meta = {}
+
+    if (data.trim()[0] === "{") {
+      data = data.split("\n\n")
+      meta = JSON.parse(data[0])
+      data = data[1]
+    }
+
+    meta.path = file
+
+    if (meta.url) {
+      if (meta.url[0] === "/")
+        meta.path = meta.url.slice(1)
+      else
+        meta.path = path.join(path.dirname(meta.path), meta.url)
+    }
+
+    if (path.extname(meta.path) === "")
+      meta.path = path.join(meta.path, "index.html")
+
+    if (meta.template && path.extname(meta.template) === "")
+      meta.template = meta.template + ".html"
+
+    return acc.concat({ meta: meta, data: data })
+  }, [])
+
+  site.cache = sh.ls("-R", path.join(dir, "templates"))
+  site.cache = site.cache.reduce(function (acc, file) {
+    var ap = path.join(dir, "templates", file)
+
+    if (sh.test("-d", ap) || path.extname(ap) !== ".html")
+      return acc
+
+    acc[file] = sh.cat(ap)
+    return acc
+  }, {})
+
+  site.resources = sh.ls("-R", path.join(dir, "res"))
+  site.resources = site.resources.reduce(function (acc, file) {
+    var ap = path.join(dir, "res", file)
+
+    if (sh.test("-d", ap))
+      return acc
+
+    var data = sh.cat(ap)
+    var meta = { path: file }
+
+    return acc.concat({ meta: meta, data: data })
+  }, [])
+
+  return site
 }
 
-function walk(dir, cb) {
-  if (!fs.statSync(dir).isDirectory())
-    return cb(new Error("argument is not a directory"), []);
-
-  fs.readdir(dir, function (err, files) {
-    if (err) return void cb(err, []);
-
-    async.reduce(files, [], function (acc, file, cb) {
-      var ap = path.join(dir, file);
-
-      if (fs.statSync(ap).isDirectory()) return walk(ap, cb);
-      acc.push(ap);
-      cb(null, acc);
-    }, cb);
-  });
-}
-
-function read(next) {
-  walk(path.join(".", "pages"), function (err, pages) {
-    if (err) return void next(err, {});
-
-    async.reduce(pages, { cache: {}, pages: [] }, function (acc, file, cb) {
-      fs.readFile(file, { encoding: "utf8" }, function (err, data) {
-        if (err) return void cb(err, acc);
-
-        var data = data.toString();
-        var meta = {};
-
-        if (data.trim()[0] === "{") {
-          data = data.split("\n\n");
-          meta = JSON.parse(data[0]);
-          data = data[1];
-        }
-
-        meta.path = meta.url || file.replace(/^pages\//, "");
-        if (path.extname(meta.path) === "")
-          meta.path = path.join(meta.path, "index.html");
-
-        var tpath = path.join(".", "templates", meta.template + ".html");
-        if (meta.template && !acc.cache[meta.template]) {
-          fs.readFile(tpath, { encoding: "utf8" }, function (err, template) {
-            if (err) return cb(err, null);
-
-            acc.cache[meta.template] = template.toString();
-            acc.pages.push({ meta: meta, data: data });
-            cb(null, acc);
-          });
-
-          return;
-        }
-
-        acc.pages.push({ meta: meta, data: data });
-        cb(null, acc);
-      });
-    }, next);
-  });
-}
-
-function compile(site, next) {
-  var pages = site.pages.map(function (page) {
+function build(site) {
+  site.pages = site.pages.map(function (page) {
     switch (path.extname(page.meta.path)) {
     case ".html":
-      page.data = handlebars.compile(page.data)(page.meta);
-      break;
+      page.data = handlebars.compile(page.data)(page.meta)
+      break
     case ".md":
-      page.data = markdown.toHTML(page.data);
+      page.data = markdown.toHTML(page.data)
+      if (!page.meta.url)
+        page.meta.path = page.meta.path.replace(/\.md$/, ".html")
     }
 
     if (page.meta.template) {
       page.data = handlebars.compile(site.cache[page.meta.template])({
         content: new handlebars.SafeString(page.data)
-      });
+      })
     }
 
-    return page;
-  });
+    return page
+  })
 
-  next(null, pages);
+  return site
 }
 
-function write(pages, next) {
-  async.each(pages, function (page, cb) {
-    var dest = path.join("site", page.meta.path);
+function write(site, dest) {
+  function wrt(list, root) {
+    list.forEach(function (item) {
+      var dir = path.join(root, path.dirname(item.meta.path))
 
-    fs.exists(path.dirname(dest), function (exists) {
-      if (exists)
-        return void fs.writeFile(dest, page.data, { encoding: "utf8" }, cb);
+      if (!sh.test("-e", dir))
+        sh.mkdir("-p", dir)
 
-      mkdir(path.dirname(dest), function () {
-        fs.writeFile(dest, page.data, { encoding: "utf8" }, cb);  
-      });
-    });
-  }, next);
+      item.data.to(path.join(root, item.meta.path))
+    })
+  }
+
+  wrt(site.pages, path.resolve(path.join(dest, "site")))
+  wrt(site.resources, path.resolve(path.join(dest, "site", "res")))
+
+  return site
 }
 
-async.waterfall([ read, compile, write ], function (err) {
-  console.log(err, "DONE");
-});
+module.exports = {
+  read:  read,
+  build: build,
+  write: write
+}

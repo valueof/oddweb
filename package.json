@@ -1,25 +1,34 @@
 {
   "name": "oddweb",
-  "version": "0.0.0",
-  "description": "experiment",
+  "version": "0.0.1",
+  "description": "Static site generator in JavaScript",
   "main": "index.js",
 
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "pretest": "jshint index.js tests.js",
+    "test":    "nodeunit tests.js"
   },
 
   "dependencies": {
-    "async":      "0.2.x",
     "handlebars": "1.0.x",
-    "jshint":     "latest",
-    "markdown":   "0.5.x"
+    "markdown":   "0.5.x",
+    "shelljs":    "~0.1.4"
   },
 
-  "siteStructure": {
-    "/": "index.html"
+  "devDependencies": {
+    "jshint":   "latest",
+    "nodeunit": "~0.8.1"
   },
 
-  "repository": "",
+  "jshintConfig": {
+    "asi":    true,
+    "node":   true,
+    "strict": true,
+    "unused": true,
+    "undef":  true
+  },
+
+  "repository": "https://github.com/antonkovalyov/oddweb.git",
   "author": "Anton Kovalyov <anton@kovalyov.net>",
   "license": "BSD"
 }
