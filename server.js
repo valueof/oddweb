@@ -4,6 +4,7 @@ var fs     = require("fs")
 var http   = require("http")
 var url    = require("url")
 var path   = require("path")
+var mime   = require("mime")
 var oddweb = require("./index.js")
 
 function server(dir, port) {
@@ -21,10 +22,11 @@ function server(dir, port) {
     var uri  = url.parse(req.url).pathname
     var file = path.join(dir, "site", uri)
 
+    console.log("GET", uri);
     fs.exists(file, function (exists) {
       if (!exists) {
         resp.writeHead(404, { "Content-Type": "text/plain" })
-        resp.write("¯\\_(ツ)_/¯")
+        resp.write("404 File Not Found")
         resp.end()
         return
       }
@@ -40,7 +42,7 @@ function server(dir, port) {
           return
         }
 
-        resp.writeHead(200)
+        resp.writeHead(200, { "Content-Type": mime.lookup(file) })
         resp.write(f, "binary")
         resp.end()
       })

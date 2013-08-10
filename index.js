@@ -2,6 +2,8 @@
 
 var path  = require("path")
 var sh    = require("shelljs")
+var fs    = require("fs")
+var mime  = require("mime")
 
 var handlebars = require("handlebars")
 var markdown   = require("markdown").markdown
@@ -22,10 +24,11 @@ function read(dir) {
     if (data.trim()[0] === "{") {
       data = data.split("\n\n")
       meta = JSON.parse(data[0])
-      data = data[1]
+      data = data.slice(1).join("\n\n")
     }
 
     meta.path = file
+    meta.type = path.extname(file).slice(1)
 
     if (meta.url) {
       if (meta.url[0] === "/")
@@ -61,8 +64,8 @@ function read(dir) {
     if (sh.test("-d", ap))
       return acc
 
-    var data = sh.cat(ap)
-    var meta = { path: file }
+    var meta = { path: file, binary: !/^text\//.test(mime.lookup(file)) }
+    var data = meta.binary ? fs.readFileSync(ap, { encoding: "binary" }) : sh.cat(ap)
 
     return acc.concat({ meta: meta, data: data })
   }, [])
@@ -72,19 +75,32 @@ function read(dir) {
 
 function build(site) {
   site.pages = site.pages.map(function (page) {
-    switch (path.extname(page.meta.path)) {
-    case ".html":
-      page.data = handlebars.compile(page.data)(page.meta)
+    switch (page.meta.type) {
+    case "html":
+      page.data = handlebars.compile(page.data)({ page: page.meta })
       break
-    case ".md":
-      page.data = markdown.toHTML(page.data)
+    case "md":
+      var html = []
+      var tmp  = page.data.split("\n\n").map(function (block) {
+        if (block.trim()[0] === "<")
+          return "$" + (html.push(block) - 1) + "$"
+        return block
+      }).join("\n\n")
+
+      page.data = markdown.toHTML(tmp).split("\n\n").map(function (block) {
+        if (/^<p>\$\d+\$<\/p>$/.test(block))
+          return html[block.slice(4, block.length - 5)]
+        return block
+      }).join("\n\n")
+
       if (!page.meta.url)
         page.meta.path = page.meta.path.replace(/\.md$/, ".html")
     }
 
     if (page.meta.template) {
       page.data = handlebars.compile(site.cache[page.meta.template])({
-        content: new handlebars.SafeString(page.data)
+        content: new handlebars.SafeString(page.data),
+        page:    page.meta
       })
     }
 
@@ -98,11 +114,15 @@ function write(site, dest) {
   function wrt(list, root) {
     list.forEach(function (item) {
       var dir = path.join(root, path.dirname(item.meta.path))
+      var ap  = path.join(root, item.meta.path)
 
       if (!sh.test("-e", dir))
         sh.mkdir("-p", dir)
 
-      item.data.to(path.join(root, item.meta.path))
+      if (item.meta.binary)
+        fs.writeFileSync(ap, item.data, { encoding: "binary" })
+      else
+        item.data.to(ap)
     })
   }
 

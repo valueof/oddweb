@@ -12,7 +12,8 @@
   "dependencies": {
     "handlebars": "1.0.x",
     "markdown":   "0.5.x",
-    "shelljs":    "~0.1.4"
+    "shelljs":    "~0.1.4",
+    "mime":       "~1.2.10"
   },
 
   "devDependencies": {
