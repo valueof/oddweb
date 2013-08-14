@@ -2,6 +2,7 @@
 
 "use strict";
 
+var path   = require("path")
 var oddweb = require("../index.js")
 var server = require("../server.js")
 var args   = process.argv.slice(2)
@@ -16,9 +17,24 @@ function error(msg) {
 if (!dir)
   error("root directory was not specified")
 
-if (cmd === "build")
-  oddweb.write(oddweb.build(oddweb.read(dir)), dir)
-else if (cmd === "dev")
+var pages;
+var plugins;
+
+if (cmd === "build") {
+  plugins = require(path.join(dir, "package.json")).oddwebPlugins || []
+  if (!~plugins.indexOf("oddweb/core"))
+    plugins.push("oddweb/core")
+
+  pages = oddweb.read(dir)
+  pages = plugins.reduce(function (acc, plugin) {
+    if (plugin === "oddweb/core")
+      return oddweb.build(acc)
+    return require(path.join(dir, "node_modules", plugin))(acc)
+  }, pages);
+
+  oddweb.write(pages, dir)
+} else if (cmd === "dev") {
   server(dir, 4000)
-else
+} else {
   error("invalid command (use 'build' or 'dev')")
+}
