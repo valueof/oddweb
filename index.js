@@ -75,6 +75,9 @@ function read(dir) {
 
 function build(site) {
   site.pages = site.pages.map(function (page) {
+    if (page.meta.skip)
+      return page
+
     switch (page.meta.type) {
     case "html":
       page.data = handlebars.compile(page.data)({ page: page.meta })
