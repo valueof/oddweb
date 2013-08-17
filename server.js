@@ -32,7 +32,7 @@ function server(dir, port) {
       }
 
       if (fs.statSync(file).isDirectory())
-        file += "/index.html"
+        file = path.join(file, "index.html")
 
       fs.readFile(file, "binary", function (err, f) {
         if (err) {
