@@ -7,6 +7,15 @@ var mime  = require("mime")
 
 var handlebars = require("handlebars")
 var markdown   = require("markdown").markdown
+var moment     = require("moment")
+
+handlebars.registerHelper("date", function (date, format) {
+  return moment(date).format(format)
+})
+
+function normalize(url, p) {
+  return url[0] === "/" ? url.slice(1) : path.join(path.dirname(p), url)
+}
 
 function read(dir) {
   var site = { src: dir }
@@ -32,14 +41,17 @@ function read(dir) {
     meta.path = file
     meta.type = path.extname(file).slice(1)
 
-    if (meta.url) {
-      if (meta.url[0] === "/")
-        meta.path = meta.url.slice(1)
-      else
-        meta.path = path.join(path.dirname(meta.path), meta.url)
-    } else {
-      meta.url = "/" + meta.path
+    if (meta.altUrl) {
+      meta.altPath = normalize(meta.altUrl, meta.path)
+
+      if (path.extname(meta.altPath) === "")
+        meta.altPath = path.join(meta.altPath, "index.html")
     }
+
+    if (meta.url)
+      meta.path = normalize(meta.url, meta.path)
+    else
+      meta.url = "/" + meta.path
 
     if (path.extname(meta.path) === "")
       meta.path = path.join(meta.path, "index.html")
@@ -83,6 +95,8 @@ function build(site) {
   var plugins = require(config).oddwebPlugins || []
 
   site = plugins.reduce(function (acc, plugin) {
+    if (/^core\//.test(plugin))
+      return require(path.join(path.dirname(module.filename), plugin) + ".js")(acc, handlebars)
     return require(path.join(src, "node_modules", plugin))(acc, handlebars)
   }, site)
 
@@ -92,7 +106,7 @@ function build(site) {
 
     switch (page.meta.type) {
     case "html":
-      page.data = handlebars.compile(page.data)({ page: page.meta, site: site })
+      page.data = handlebars.compile(page.data)({ page: page.meta, site: site, sup: ["a","b"] })
       break
     case "md":
       var html = []
@@ -127,18 +141,26 @@ function build(site) {
 }
 
 function write(site) {
+  function prep(root, p) {
+    var dir = path.join(root, path.dirname(p))
+
+    if (!sh.test("-e", dir))
+      sh.mkdir("-p", dir)
+
+    return path.join(root, p)
+  }
+
   function wrt(list, root) {
     list.forEach(function (item) {
-      var dir = path.join(root, path.dirname(item.meta.path))
-      var ap  = path.join(root, item.meta.path)
-
-      if (!sh.test("-e", dir))
-        sh.mkdir("-p", dir)
+      var ap = prep(root, item.meta.path)
 
       if (item.meta.binary)
         fs.writeFileSync(ap, item.data, { encoding: "binary" })
       else
         item.data.to(ap)
+
+      if (item.meta.altPath)
+        ("<html><meta http-equiv=refresh content='0;" + item.meta.url + "'></html>").to(prep(root, item.meta.altPath))
     })
   }
 
