@@ -38,8 +38,8 @@ function read(dir) {
     }
 
     meta.id   = uid++
-    meta.path = file
     meta.type = path.extname(file).slice(1)
+    meta.path = meta.type === "html" ? file : file.replace(/\.\S+$/, ".html")
 
     if (meta.altUrl) {
       meta.altPath = normalize(meta.altUrl, meta.path)

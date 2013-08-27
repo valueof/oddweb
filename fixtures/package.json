@@ -1,0 +1,12 @@
+{
+  "name": "fixtures",
+  "version": "0.0.0",
+  "description": "Fixtures",
+
+  "oddwebPlugins": [
+    "core/blog"
+  ],
+
+  "author": "Anton Kovalyov <anton@kovalyov.net>",
+  "license": "BSD"
+}

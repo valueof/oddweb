@@ -23,13 +23,13 @@ t.testRead = function (test) {
   })
 
   test.deepEqual(site.pages, [
-    { meta: { path: "about/index.html", url: "/about/", template: "main.html", type: "html" },
+    { meta: { id: 0, path: "about/index.html", url: "/about/", template: "main.html", type: "html" },
       data: "<h1>About me!</h1>" },
-    { meta: { path: "blog/archive/index.html", url: "archive", type: "html" },
+    { meta: { id: 1, path: "blog/archive/index.html", url: "archive", type: "html" },
       data: "<html><h1>Archive</h1></html>" },
-    { meta: { path: 'blog/post.md', type: "md" },
+    { meta: { id: 2, path: 'blog/post.html', url: '/blog/post.html', type: "md" },
       data: '**This is my post**' },
-    { meta: { path: "index.html", template: "main.html", type: "html" },
+    { meta: { id: 3, path: "index.html", template: "main.html", url: '/index.html', type: "html" },
       data: "<h1>Welcome to my new site!</h1>" }
   ])
 
@@ -46,13 +46,13 @@ t.testBuild = function (test) {
   site = oddweb.build(site)
 
   test.deepEqual(site.pages, [
-    { meta: { template: 'main.html', url: '/about/', path: 'about/index.html', type: "html" },
+    { meta: { id: 0, template: 'main.html', url: '/about/', path: 'about/index.html', type: "html" },
       data: '<html><h1>About me!</h1></html>' },
-    { meta: { url: 'archive', path: 'blog/archive/index.html', type: "html" },
+    { meta: { id: 1, url: 'archive', path: 'blog/archive/index.html', type: "html" },
       data: '<html><h1>Archive</h1></html>' },
-    { meta: { path: 'blog/post.html', type: "md" },
+    { meta: { id: 2, path: 'blog/post.html', type: "md", url: "/blog/post.html" },
       data: '<p><strong>This is my post</strong></p>' },      
-    { meta: { template: 'main.html', path: 'index.html', type: "html" },
+    { meta: { id: 3, template: 'main.html', path: 'index.html', type: "html", url: "/index.html" },
       data: '<html><h1>Welcome to my new site!</h1></html>' }
   ])
 
