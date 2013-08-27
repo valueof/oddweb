@@ -27,10 +27,11 @@ t.testRead = function (test) {
       data: "<h1>About me!</h1>" },
     { meta: { id: 1, path: "blog/archive/index.html", url: "archive", type: "html" },
       data: "<html><h1>Archive</h1></html>" },
-    { meta: { id: 2, path: 'blog/post.html', url: '/blog/post.html', type: "md" },
+    { meta: { id: 2, blog: true, title: "My post", date: "2013-08-27",
+              path: 'blog/post.html', url: '/blog/post.html', type: "md" },
       data: '**This is my post**' },
     { meta: { id: 3, path: "index.html", template: "main.html", url: '/index.html', type: "html" },
-      data: "<h1>Welcome to my new site!</h1>" }
+      data: "<h1>Welcome!</h1> <div>{{#posts}}{{{date meta.date \"MMM Do, YYYY\"}}} | {{meta.url}} | {{meta.title}}{{/posts}}</div>" }
   ])
 
   test.deepEqual(site.resources, [
@@ -50,10 +51,11 @@ t.testBuild = function (test) {
       data: '<html><h1>About me!</h1></html>' },
     { meta: { id: 1, url: 'archive', path: 'blog/archive/index.html', type: "html" },
       data: '<html><h1>Archive</h1></html>' },
-    { meta: { id: 2, path: 'blog/post.html', type: "md", url: "/blog/post.html" },
+    { meta: { id: 2, blog: true, title: "My post", date: "2013-08-27",
+              path: 'blog/post.html', type: "md", url: "/blog/post.html" },
       data: '<p><strong>This is my post</strong></p>' },      
     { meta: { id: 3, template: 'main.html', path: 'index.html', type: "html", url: "/index.html" },
-      data: '<html><h1>Welcome to my new site!</h1></html>' }
+      data: '<html><h1>Welcome!</h1> <div>Aug 27th, 2013 | /blog/post.html | My post</div></html>' }
   ])
 
   test.done()
@@ -65,7 +67,7 @@ t.testWrite = function (test) {
   oddweb.write(site, "./tmp")
 
   test.equal(sh.cat("./tmp/site/index.html"),
-    "<html><h1>Welcome to my new site!</h1></html>")
+    "<html><h1>Welcome!</h1> <div>Aug 27th, 2013 | /blog/post.html | My post</div></html>")
   test.equal(sh.cat("./tmp/site/blog/archive/index.html"),
     "<html><h1>Archive</h1></html>")
   test.equal(sh.cat("./tmp/site/about/index.html"),
