@@ -9,6 +9,10 @@
     "test":    "nodeunit tests.js"
   },
 
+  "engines": {
+    "node": ">=0.10.0"
+  },
+
   "dependencies": {
     "handlebars": "1.0.x",
     "markdown":   "0.5.x",
