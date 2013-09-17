@@ -1,0 +1,2 @@
+<name>oddweb</name>
+<posts>{{#posts}}<post>{{meta.title}}</post>{{/posts}}</posts>

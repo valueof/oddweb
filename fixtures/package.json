@@ -4,6 +4,7 @@
   "description": "Fixtures",
 
   "oddwebPlugins": [
+    "core/time",
     "core/blog"
   ],
 

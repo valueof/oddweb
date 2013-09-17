@@ -31,7 +31,9 @@ t.testRead = function (test) {
               path: 'blog/post.html', url: '/blog/post.html', type: "md" },
       data: '**This is my post**' },
     { meta: { id: 3, path: "index.html", template: "main.html", url: '/index.html', type: "html" },
-      data: "<h1>Welcome!</h1> <div>{{#posts}}{{{date meta.date \"MMM Do, YYYY\"}}} | {{meta.url}} | {{meta.title}}{{/posts}}</div>" }
+      data: "<h1>Welcome!</h1> <div>{{#posts}}{{{date meta.date \"MMM Do, YYYY\"}}} | {{meta.url}} | {{meta.title}}{{/posts}}</div>" },
+    { meta: { id: 4, type: 'xml', path: 'index.xml', url: '/index.xml' },
+      data: '<name>oddweb</name>\n<posts>{{#posts}}<post>{{meta.title}}</post>{{/posts}}</posts>' }
   ])
 
   test.deepEqual(site.resources, [
@@ -55,7 +57,9 @@ t.testBuild = function (test) {
               path: 'blog/post.html', type: "md", url: "/blog/post.html" },
       data: '<p><strong>This is my post</strong></p>' },      
     { meta: { id: 3, template: 'main.html', path: 'index.html', type: "html", url: "/index.html" },
-      data: '<html><h1>Welcome!</h1> <div>Aug 27th, 2013 | /blog/post.html | My post</div></html>' }
+      data: '<html><h1>Welcome!</h1> <div>Aug 27th, 2013 | /blog/post.html | My post</div></html>' },
+    { meta: { id: 4, type: 'xml', path: 'index.xml', url: '/index.xml' },
+      data: '<name>oddweb</name>\n<posts><post>My post</post></posts>' }
   ])
 
   test.done()
@@ -76,6 +80,8 @@ t.testWrite = function (test) {
     "<p><strong>This is my post</strong></p>")
   test.equal(sh.cat("./tmp/site/ap/index.html"),
     "<html><meta http-equiv=refresh content=\'0;/blog/post.html\'></html>")
+  test.equal(sh.cat("./tmp/site/index.xml"),
+    "<name>oddweb</name>\n<posts><post>My post</post></posts>")
 
   test.equal(sh.cat("./tmp/site/res/scripts.js"), "while (true) {}")
   test.equal(sh.cat("./tmp/site/res/styles.css"), "body { color: hotpink; }")

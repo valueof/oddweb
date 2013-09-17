@@ -39,7 +39,7 @@ function read(dir) {
 
     meta.id   = uid++
     meta.type = path.extname(file).slice(1)
-    meta.path = meta.type === "html" ? file : file.replace(/\.\S+$/, ".html")
+    meta.path = meta.type === "md" ? file.replace(/\.\S+$/, ".html") : file
 
     if (meta.altUrl) {
       meta.altPath = normalize(meta.altUrl, meta.path)
@@ -105,8 +105,9 @@ function build(site) {
       return page
 
     switch (page.meta.type) {
+    case "xml":
     case "html":
-      page.data = handlebars.compile(page.data)({ page: page.meta, site: site, sup: ["a","b"] })
+      page.data = handlebars.compile(page.data)({ page: page.meta, site: site })
       break
     case "md":
       var html = []
