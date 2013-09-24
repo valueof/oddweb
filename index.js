@@ -97,6 +97,10 @@ function build(site) {
   site = plugins.reduce(function (acc, plugin) {
     if (/^core\//.test(plugin))
       return require(path.join(path.dirname(module.filename), plugin) + ".js")(acc, handlebars)
+
+    if (path.extname(plugin) === ".js")
+      return require(path.join(src, plugin))(acc, handlebars)
+
     return require(path.join(src, "node_modules", plugin))(acc, handlebars)
   }, site)
 
