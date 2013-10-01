@@ -18,7 +18,7 @@ function normalize(url, p) {
 }
 
 function read(dir) {
-  var site = { src: dir }
+  var site = { src: dir, dev: false }
   var uid  = 0
 
   site.pages = sh.ls("-R", path.join(dir, "pages"))

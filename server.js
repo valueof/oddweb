@@ -10,7 +10,9 @@ var oddweb = require("./index.js")
 function server(dir, port) {
   function rebuild() {
     console.log("rebuilding...")
-    oddweb.write(oddweb.build(oddweb.read(dir)), dir)
+    var site = oddweb.read(dir)
+    site.dev = true
+    oddweb.write(oddweb.build(site), dir)
   }
 
   rebuild()
