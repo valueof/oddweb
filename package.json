@@ -14,11 +14,10 @@
   },
 
   "dependencies": {
-    "handlebars": "1.0.x",
+    "handlebars": "4.0.0",
     "markdown":   "0.5.x",
     "shelljs":    "~0.1.4",
-    "mime":       "~1.2.10",
-    "moment":     "~2.1.0"
+    "moment":     "2.19.3"
   },
 
   "devDependencies": {
