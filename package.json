@@ -14,7 +14,7 @@
   },
 
   "dependencies": {
-    "handlebars": "4.0.0",
+    "handlebars": "4.4.5",
     "markdown":   "0.5.x",
     "shelljs":    "~0.1.4",
     "moment":     "2.19.3"
